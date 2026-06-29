@@ -10,13 +10,13 @@ const Home = () => {
   return (
     <div className="w-full">
       <section className="max-w-7xl mx-auto px-6 lg:px-12 pt-6 pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-          <HeroSection onInstallClick={() => setShowInstall(true)} />
-          <div id="scanner" className="w-full max-w-2xl mx-auto lg:max-w-none scroll-mt-24 flex flex-col gap-8">
-            <LiveScanner />
-            <LiveDatabaseFeed />
-          </div>
-        </div>
+        <HeroSection onInstallClick={() => setShowInstall(true)} />
+      </section>
+      <section className="max-w-7xl mx-auto px-6 lg:px-12">
+        <LiveScanner />
+      </section>
+      <section className="max-w-6xl mx-auto px-4 mt-24">
+        <LiveDatabaseFeed />
       </section>
       
       {showInstall && (
