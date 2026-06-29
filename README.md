@@ -47,7 +47,7 @@ uvicorn main:app --reload
 * **Ishan Tomar** - Security Extensions & Integration Engineer
 
 ### Screenshots & Demo Link
-* **Demo Video:** [Insert YouTube/Drive Link Here]
+* **Demo Video:** [https://drive.google.com/file/d/1cdrfGrJ8yg2HvXsPXAy6Xv1Kgt0abNqN/view?usp=drive_link]
 * **Live Dashboard:** [https://trustlens-steel.vercel.app]
 <h2 align="center">📸 Project Screenshots</h2>
 
