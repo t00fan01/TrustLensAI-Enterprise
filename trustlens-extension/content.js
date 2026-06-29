@@ -160,8 +160,10 @@ async function activePageScanner() {
             const data = JSON.parse(cachedDataStr);
             if (data.classification === "High Risk" || data.classification === "Scam") {
                 triggerFullScreenBlocker(data);
+                return;
             } else if (data.classification === "Warning") {
                 injectYellowWarningBanner(data);
+                return;
             }
         } catch(e) {}
         return;
@@ -291,12 +293,19 @@ function triggerFullScreenBlocker(data) {
     document.getElementById('tl-proceed').addEventListener('click', () => blocker.remove());
 }
 if (window.location.hostname.includes("google.com")) {
+    window.addEventListener('pageshow', (event) => {
+        injectTrustLensShields();
+    });
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', injectTrustLensShields);
     } else {
         injectTrustLensShields();
     }
 } else {
+    window.addEventListener('pageshow', (event) => {
+        // Clean check on every single page show/re-visit event to bypass bfcache
+        activePageScanner();
+    });
     document.addEventListener('DOMContentLoaded', activePageScanner);
     if (document.body) {
         activePageScanner();
