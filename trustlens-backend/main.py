@@ -1,255 +1,92 @@
-import os
-import json
-import sqlite3
-import math
-import asyncio
-import random
-from datetime import datetime, timezone
-from typing import List
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from dotenv import load_dotenv
-from groq import Groq
+import sqlite3
+import json
+from urllib.parse import urlparse
 
-load_dotenv()
-
-app = FastAPI(title="TrustLensAI Backend")
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "https://aladin-tawny.vercel.app"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-DB_PATH = "trustlens_security.db"
+DB_FILE = "threat_cache.db"
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH, timeout=10)
+    conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS system_transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            account_id TEXT,
-            amount REAL,
-            timestamp TEXT,
-            is_flagged INTEGER DEFAULT 0,
-            is_scanned INTEGER DEFAULT 0,
-            ai_analysis TEXT
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS scan_cache (
+            domain TEXT PRIMARY KEY,
+            classification TEXT,
+            risk_score INTEGER,
+            reasons TEXT
         )
-    ''')
+    """)
     conn.commit()
     conn.close()
 
-def calculate_z_score(current_amount: float, all_amounts: List[float]) -> float:
-    if len(all_amounts) < 2:
-        return 0.0
-    
-    mean = sum(all_amounts) / len(all_amounts)
-    variance = sum((x - mean) ** 2 for x in all_amounts) / len(all_amounts)
-    std_dev = math.sqrt(variance)
-    
-    if std_dev == 0:
-        return 0.0
-        
-    return (current_amount - mean) / std_dev
+init_db()
 
-async def mock_transaction_generator():
-    while True:
-        await asyncio.sleep(5)
-        try:
-            conn = sqlite3.connect(DB_PATH)
-            cursor = conn.cursor()
-            
-            # Inject 5-10 normal transactions
-            num_normals = random.randint(5, 10)
-            for _ in range(num_normals):
-                account_id = f"ACC_{random.randint(1000, 9999)}"
-                amount = round(random.uniform(10.0, 500.0), 2)
-                timestamp = datetime.now(timezone.utc).isoformat()
-                cursor.execute('''
-                    INSERT INTO system_transactions (account_id, amount, timestamp)
-                    VALUES (?, ?, ?)
-                ''', (account_id, amount, timestamp))
-                
-            # Randomly inject a massive anomaly (10% chance per cycle)
-            if random.random() < 0.10:
-                account_id = f"ACC_{random.randint(1000, 9999)}_SUS"
-                amount = round(random.uniform(50000.0, 150000.0), 2)
-                timestamp = datetime.now(timezone.utc).isoformat()
-                cursor.execute('''
-                    INSERT INTO system_transactions (account_id, amount, timestamp)
-                    VALUES (?, ?, ?)
-                ''', (account_id, amount, timestamp))
-                print(f"[*] Injected massive anomalous transaction: ${amount} for {account_id}")
-
-            conn.commit()
-            conn.close()
-        except Exception as e:
-            print(f"Mock generator error: {e}")
-
-async def guardian_loop():
-    while True:
-        await asyncio.sleep(3)
-        try:
-            conn = sqlite3.connect(DB_PATH)
-            cursor = conn.cursor()
-            
-            # Fetch all historical amounts to calculate mean/stddev natively
-            cursor.execute('SELECT amount FROM system_transactions WHERE is_scanned = 1')
-            history = cursor.fetchall()
-            historical_amounts = [row[0] for row in history]
-            
-            # Fetch unscanned transactions
-            cursor.execute('SELECT id, account_id, amount, timestamp FROM system_transactions WHERE is_scanned = 0')
-            unscanned = cursor.fetchall()
-            
-            for row in unscanned:
-                tx_id, account_id, amount, timestamp = row
-                
-                # Check anomaly
-                z_score = calculate_z_score(amount, historical_amounts)
-                is_flagged = 1 if abs(z_score) > 3.0 else 0
-                ai_analysis = None
-                
-                if is_flagged:
-                    print(f"[!] Anomaly detected! Z-score: {z_score:.2f}, Amount: ${amount}")
-                    
-                    system_prompt = """
-                    You are an elite financial cybersecurity AI. Analyze this anomalous transaction.
-                    Respond ONLY with a JSON object matching this structure:
-                    {
-                      "threat_level": "<High, Critical>",
-                      "action_recommended": "<Freeze Account, Block IP, etc>",
-                      "reasoning": "<Short explanation>"
-                    }
-                    """
-                    user_prompt = f"Transaction Details:\nAccount: {account_id}\nAmount: ${amount}\nTime: {timestamp}\nZ-Score: {z_score:.2f}"
-                    
-                    try:
-                        chat_completion = client.chat.completions.create(
-                            messages=[
-                                {"role": "system", "content": system_prompt},
-                                {"role": "user", "content": user_prompt}
-                            ],
-                            model="llama-3.1-8b-instant",
-                            response_format={"type": "json_object"},
-                            temperature=0.2,
-                        )
-                        ai_analysis = chat_completion.choices[0].message.content
-                    except Exception as e:
-                        print(f"Guardian AI Error: {e}")
-                        ai_analysis = json.dumps({"threat_level": "Critical", "action_recommended": "Manual Review", "reasoning": "AI timeout during anomaly analysis."})
-                
-                # Update record
-                cursor.execute('''
-                    UPDATE system_transactions 
-                    SET is_scanned = 1, is_flagged = ?, ai_analysis = ? 
-                    WHERE id = ?
-                ''', (is_flagged, ai_analysis, tx_id))
-                
-                # Add to local historical amounts for the next iteration in this cycle
-                historical_amounts.append(amount)
-
-            conn.commit()
-            conn.close()
-        except Exception as e:
-            print(f"Guardian loop error: {e}")
-
-@app.on_event("startup")
-async def startup_event():
-    init_db()
-    asyncio.create_task(mock_transaction_generator())
-    asyncio.create_task(guardian_loop())
-
-class URLRequest(BaseModel):
+class ScanRequest(BaseModel):
     url: str
-    text_content: str = ""
+    text_content: str
 
-class RiskResponse(BaseModel):
-    risk_score: int
-    classification: str
-    reasons: List[str]
-
-@app.post("/analyze", response_model=RiskResponse)
-async def analyze_content(request: URLRequest):
-    if not request.text_content and not request.url:
-        raise HTTPException(status_code=400, detail="No content provided")
-
-    system_prompt = """
-    You are an elite cybersecurity AI. Analyze the provided text/URL for phishing, scams, or fraud.
-    Respond ONLY with a valid JSON object matching this exact structure, nothing else:
-    {
-      "risk_score": <integer between 0 and 100>,
-      "classification": "<Safe, Warning, or Scam>",
-      "reasons": ["<reason 1>", "<reason 2>"]
-    }
-    """
-
-    user_prompt = f"URL: {request.url}\nPage Text: {request.text_content}"
-
+def get_domain(url_str: str) -> str:
     try:
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            model="llama-3.1-8b-instant", 
-            response_format={"type": "json_object"}, 
-            temperature=0.2, 
-        )
-        
-        ai_response = json.loads(chat_completion.choices[0].message.content)
-        
-        return RiskResponse(
-            risk_score=ai_response["risk_score"],
-            classification=ai_response["classification"],
-            reasons=ai_response["reasons"]
-        )
-        
-    except Exception as e:
-        print(f"AI Error: {e}")
-        return RiskResponse(risk_score=50, classification="Warning", reasons=["AI Analysis timed out."])
+        parsed = urlparse(url_str)
+        return parsed.netloc.lower() if parsed.netloc else url_str.lower()
+    except Exception:
+        return url_str.lower()
 
-@app.get("/api/transactions")
-async def get_transactions():
+@app.post("/analyze")
+async def analyze_threat(payload: ScanRequest):
+    domain = get_domain(payload.url)
+    
+    # 1. DATABASE CACHE LOOKUP (Instantaneous Execution)
     try:
-        conn = sqlite3.connect(DB_PATH, timeout=10)
+        conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
-        cursor.execute('''
-            SELECT id, account_id, amount, timestamp, is_flagged, ai_analysis 
-            FROM system_transactions 
-            ORDER BY id DESC LIMIT 20
-        ''')
-        rows = cursor.fetchall()
-        
-        transactions = []
-        for row in rows:
-            ai_data = None
-            if row[5]:
-                try:
-                    ai_data = json.loads(row[5])
-                except Exception:
-                    pass
-            
-            transactions.append({
-                "id": row[0],
-                "account_id": row[1],
-                "amount": row[2],
-                "timestamp": row[3],
-                "is_flagged": row[4],
-                "ai_analysis": ai_data
-            })
-            
+        cursor.execute("SELECT classification, risk_score, reasons FROM scan_cache WHERE domain = ?", (domain,))
+        row = cursor.fetchone()
         conn.close()
-        return transactions
+        
+        if row:
+            return {
+                "classification": row[0],
+                "risk_score": row[1],
+                "reasons": json.loads(row[2])
+            }
     except Exception as e:
-        print(f"Error fetching transactions: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        print(f"Cache lookup failed: {e}")
 
-@app.get("/")
-async def root():
-    return {"message": "TrustLensAI Engine is Online"}
+    # 2. SEAMLESS FALLBACK TO AI CALL (If domain isn't cached yet)
+    # [Insert your current processing or Groq inference code here]
+    # For example purposes, let's look at a mock processed variable set:
+    ai_classification = "Safe" 
+    ai_risk_score = 12
+    ai_reasons = ["Verified transaction structure", "No credential harvesting signs identified."]
+    
+    # 3. WRITE RESULT TO DATABASE TO ACCELERATE FUTURE VISITS
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT OR REPLACE INTO scan_cache (domain, classification, risk_score, reasons) VALUES (?, ?, ?, ?)",
+            (domain, ai_classification, ai_risk_score, json.dumps(ai_reasons))
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Cache write failed: {e}")
+
+    return {
+        "classification": ai_classification,
+        "risk_score": ai_risk_score,
+        "reasons": ai_reasons
+    }
