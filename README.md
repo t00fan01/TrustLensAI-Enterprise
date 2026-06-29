@@ -1,44 +1,113 @@
-# TrustLens AI
-A context-aware cyber safety agent that detects zero-day phishing and social engineering attacks using intent-based heuristic evaluation.
+# Project Title
 
-### 1. Problem Statement & Solution Overview
-**Problem:** Traditional security tools rely on reactive blocklists of known malicious URLs, leaving users vulnerable to newly created (zero-day) phishing and KYC scams.
-**Solution:** TrustLens AI utilizes intent-based heuristic evaluation. It analyzes the raw DOM and contextual language of a webpage in real-time to identify psychological manipulation tactics, halting threats before they execute.
+- TrustLens AI
+- A context-aware cyber safety agent that detects zero-day phishing and social engineering attacks using intent-based heuristic evaluation.
 
-### 2. Tech Stack
-* **Frontend:** React, Vite, Tailwind CSS
-* **Extension:** Chrome Manifest V3, Vanilla JS
-* **Backend:** Python, FastAPI, Render (Cloud)
+---
 
-### 3. Installation and Setup Instructions
-**Web Dashboard:**
-1. Clone the repository or download the ZIP.
-2. Run `npm install` in the `trustlens-landing` directory.
-3. Run `npm run dev` to launch the local interface.
+# Problem Statement
 
-**Chrome Extension:**
-1. Download `trustlens-extension.zip` from our live portal.
-2. Extract the folder.
-3. Go to `chrome://extensions` and enable Developer Mode.
-4. Click "Load unpacked" and select the extracted folder.
+Traditional security tools rely on reactive blocklists of known malicious URLs, leaving users vulnerable to newly created (zero-day) phishing, Web3 wallet drainers, and KYC scams.
 
-### 4. AI Tools Disclosure Table
+---
+
+# Solution Overview
+
+TrustLens AI utilizes a high-performance Tiered Pipeline Architecture for intent-based heuristic evaluation. It analyzes raw DOM metadata, flags local heuristics (like malicious Web3 signatures and form hijacking) in 0 milliseconds, and uses a contextual AI engine in real-time to identify psychological manipulation tactics, halting zero-day threats before they execute.
+
+---
+
+# Tech Stack
+
+- **Frontend:** React, Vite, Tailwind CSS
+- **Backend:** Python, FastAPI, SQLite
+- **AI / ML:** Groq LLaMA 3.1
+- **Browser Extension:** Chrome Manifest V3, Vanilla JS
+- **Deployment:** Render (Backend API), Vercel (Frontend Site)
+
+---
+
+# Installation & Setup Instructions
+
+### Prerequisites
+- Node.js (v16+)
+- Python (3.9+)
+- Google Chrome Browser
+
+### Clone Repository
+```bash
+git clone https://github.com/t00fan01/TrustLensAI-Enterprise.git
+cd TrustLensAI-Enterprise
+```
+
+### Install Dependencies
+
+**Backend:**
+```bash
+cd trustlens-backend
+pip install -r requirements.txt
+```
+
+**Frontend:**
+```bash
+cd ../trustlens-landing
+npm install
+```
+
+### Environment Variables
+Create a `.env` file in the `trustlens-backend` directory and add your Groq API key:
+```env
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+### Run Backend
+Navigate to the `trustlens-backend` directory and start the server:
+```bash
+uvicorn main:app --reload
+```
+
+### Run Frontend
+Navigate to the `trustlens-landing` directory and start the development server:
+```bash
+npm run dev
+```
+
+### Load Browser Extension (if applicable)
+1. Open Google Chrome and navigate to `chrome://extensions`.
+2. Toggle **Developer mode** in the top right corner.
+3. Click **Load unpacked** and select the `trustlens-extension` folder from the cloned repository.
+
+### Run Project
+Ensure both the backend API and frontend site are running concurrently. With the extension loaded, navigate to any unverified URL or trigger a Google search to see the active page scanning and Live Threat Scanner in action.
+
+### Local Setup Instructions
+For a quick local start on Windows environments, you can simply execute the provided batch scripts in the root directory:
+- `run_backend.bat`
+- `run_landing.bat`
+
+---
+
+# AI Tools Disclosure
+
 | Tool Used | Purpose | Section / Feature Applied To |
-| :--- | :--- | :--- |
-| Gemini / AI Guardian | Core heuristic analysis | Backend intent-evaluation engine |
-| Cursor / Antigravity | Code formatting & refactoring | React component styling and code cleanup |
+|-----------|----------|------------------------------|
+| Groq LLaMA 3.1 | Core heuristic intent analysis | Backend API Threat Engine |
+| Antigravity (Gemini 3.1 Pro) | Code optimization, refactoring, and AI integration | Full-Stack (Backend, Extension, Frontend) |
 
-### 5. Team Members & Roles
+---
 
-* **Lakshya Malviya** — *Lead Full-Stack Developer & Security Architect*
-  * **Responsibilities:** Designed the core two-tiered hybrid anomaly detection architecture. Built the Python FastAPI server infrastructure, local rolling Z-Score statistical matrix, and bulletproofed database concurrency controls. Handled production environment configuration and deployment across isolated Render nodes.
+# Team Members & Roles
 
-* **Anuj Malviya** — *Frontend Engineer & UI/UX Specialist*
-  * **Responsibilities:** Developed the responsive React web application and landing interface using Vite and Tailwind CSS. Built the live-polling transaction feed panel and mapped glassmorphism-styled warning themes. Optimized frontend state handlers to cleanly display asynchronous AI threat mitigation reports without layout shifts.
+| Name | Role |
+|------|------|
+| Lakshya Malviya | Lead Full-Stack Developer & Security Architect |
+| Anuj Malviya | Frontend Engineer & UI/UX Specialist |
+| Ishan Tomar | Security Extensions & Integration Engineer |
 
-* **Ishan Tomar** — *Security Extensions & Integration Engineer*
-  * **Responsibilities:** Engineered the Chrome Manifest V3 extension core script logic, background workers, and DOM-based layout injection. Designed the high z-index active content-blurring interstitial blocker system. Facilitated robust cross-origin resource sharing (CORS) security handshakes between the extension client and active APIs.
+---
 
+# Screenshots / Demo
 
-### 6. Screenshots & Demo Link
-* **Live Portal:** [https://trustlens-steel.vercel.app/]
+Demo Link: [https://trustlens-steel.vercel.app/](https://trustlens-steel.vercel.app/)
+
+Project Screenshots: To be added
