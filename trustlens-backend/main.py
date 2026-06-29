@@ -6,6 +6,9 @@ import json
 import os
 from urllib.parse import urlparse
 from groq import Groq
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -90,9 +93,9 @@ You MUST return your analysis strictly as a JSON object with this exact structur
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                model="llama-3.1-70b-versatile",
+                model="llama-3.1-8b-instant",
                 response_format={"type": "json_object"},
-                temperature=0.0
+                temperature=0.2
             )
             response_text = chat_completion.choices[0].message.content
             result = json.loads(response_text)
