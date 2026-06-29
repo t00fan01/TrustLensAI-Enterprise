@@ -37,4 +37,14 @@ uvicorn main:app --reload
 ### Screenshots & Demo Link
 * **Demo Video:** [Insert YouTube/Drive Link Here]
 * **Live Dashboard:** [https://trustlens-steel.vercel.app]
-![TrustLens Dashboard](https://github.com/t00fan01/TrustLensAI-Enterprise/blob/bf90e710f9f3b5b2435ccd684f7142c7fd285484/7ab59eae-d8c0-4b44-9b29-de3744317f4a.jpeg)
+<h2 align="center">📸 Project Screenshots</h2>
+
+<p align="center">
+  <img src="IMAGE_LINK_1" width="45%" />
+  <img src="IMAGE_LINK_2" width="45%" />
+</p>
+
+<p align="center">
+  <img src="IMAGE_LINK_3" width="45%" />
+  <img src="IMAGE_LINK_4" width="45%" />
+</p>
