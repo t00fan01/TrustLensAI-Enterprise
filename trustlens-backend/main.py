@@ -3,7 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import sqlite3
 import json
+import os
 from urllib.parse import urlparse
+from groq import Groq
 
 app = FastAPI()
 
@@ -16,6 +18,7 @@ app.add_middleware(
 )
 
 DB_FILE = "threat_cache.db"
+groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY")) if os.environ.get("GROQ_API_KEY") else None
 
 def init_db():
     conn = sqlite3.connect(DB_FILE)
@@ -66,11 +69,39 @@ async def analyze_threat(payload: ScanRequest):
         print(f"Cache lookup failed: {e}")
 
     # 2. SEAMLESS FALLBACK TO AI CALL (If domain isn't cached yet)
-    # [Insert your current processing or Groq inference code here]
-    # For example purposes, let's look at a mock processed variable set:
-    ai_classification = "Safe" 
-    ai_risk_score = 12
-    ai_reasons = ["Verified transaction structure", "No credential harvesting signs identified."]
+    system_prompt = """You are a cybersecurity expert analyzing a website for phishing, social engineering, and malicious intent.
+Analyze the provided URL and text content.
+You MUST return your analysis strictly as a JSON object with this exact structure:
+{
+  "classification": "Safe" | "Warning" | "High Risk" | "Scam",
+  "risk_score": <int 0-100>,
+  "reasons": ["string", "string"]
+}"""
+    user_prompt = f"URL: {payload.url}\n\nContent:\n{payload.text_content}"
+
+    ai_classification = "Warning"
+    ai_risk_score = 50
+    ai_reasons = ["Analysis failed or Groq API key missing."]
+
+    if groq_client:
+        try:
+            chat_completion = groq_client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                model="llama-3.1-70b-versatile",
+                response_format={"type": "json_object"},
+                temperature=0.0
+            )
+            response_text = chat_completion.choices[0].message.content
+            result = json.loads(response_text)
+            
+            ai_classification = result.get("classification", "Warning")
+            ai_risk_score = result.get("risk_score", 50)
+            ai_reasons = result.get("reasons", ["Failed to parse AI reasons."])
+        except Exception as e:
+            print(f"Groq API call failed: {e}")
     
     # 3. WRITE RESULT TO DATABASE TO ACCELERATE FUTURE VISITS
     try:
