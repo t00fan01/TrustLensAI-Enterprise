@@ -9,9 +9,6 @@
 
 </div>
 <br>
-
-### Problem Statement and Solution Overview
-
 ### Problem Statement and Solution Overview
 Modern phishing attacks no longer just steal passwords; they utilize malicious smart contracts and hidden DOM elements to drain Web3 wallets and hijack sessions. Traditional API-based scanners are too slow and vulnerable to rate limits. 
 
