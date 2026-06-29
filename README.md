@@ -2,7 +2,7 @@
   <img src="trustlens-extension/logo.png" alt="TrustLens AI Logo" width="120" />
 </div>
 <div align="center">
-# TrustLens AI 🛡️
+##### TrustLens AI 🛡️
   </div>
 **A zero-latency Web3 cybersecurity shield and heuristic phishing detector.**
 
