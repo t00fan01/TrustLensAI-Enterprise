@@ -1,10 +1,16 @@
 <div align="center">
-  <img src="trustlens-extension/logo.png" alt="TrustLens AI Logo" width="120" />
+  
+  <!-- Make sure your logo path here is correct based on your repo -->
+  <img src="assets/logo.png" alt="TrustLens AI Logo" width="150">
+
+  <h1>TrustLens AI 🛡️</h1>
+
+  <strong>A zero-latency Web3 cybersecurity shield and heuristic phishing detector.</strong>
+
 </div>
-<div align="center">
-# TrustLens AI 🛡️
-  </div>
-**A zero-latency Web3 cybersecurity shield and heuristic phishing detector.**
+<br>
+
+### Problem Statement and Solution Overview
 
 ### Problem Statement and Solution Overview
 Modern phishing attacks no longer just steal passwords; they utilize malicious smart contracts and hidden DOM elements to drain Web3 wallets and hijack sessions. Traditional API-based scanners are too slow and vulnerable to rate limits. 
