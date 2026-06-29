@@ -29,9 +29,16 @@ A context-aware cyber safety agent that detects zero-day phishing and social eng
 | Cursor / Antigravity | Code formatting & refactoring | React component styling and code cleanup |
 
 ### 5. Team Members & Roles
-* **[LAKSHYA]** - Lead Full-Stack Developer & Security Architect
-* **[ANUJ MALVIYA ]** - [
-* **[Ishan Singh ]** - [ML Model]
+
+* **Lakshya Malviya** — *Lead Full-Stack Developer & Security Architect*
+  * **Responsibilities:** Designed the core two-tiered hybrid anomaly detection architecture. Built the Python FastAPI server infrastructure, local rolling Z-Score statistical matrix, and bulletproofed database concurrency controls. Handled production environment configuration and deployment across isolated Render nodes.
+
+* **Anuj Malviya** — *Frontend Engineer & UI/UX Specialist*
+  * **Responsibilities:** Developed the responsive React web application and landing interface using Vite and Tailwind CSS. Built the live-polling transaction feed panel and mapped glassmorphism-styled warning themes. Optimized frontend state handlers to cleanly display asynchronous AI threat mitigation reports without layout shifts.
+
+* **Ishan Tomar** — *Security Extensions & Integration Engineer*
+  * **Responsibilities:** Engineered the Chrome Manifest V3 extension core script logic, background workers, and DOM-based layout injection. Designed the high z-index active content-blurring interstitial blocker system. Facilitated robust cross-origin resource sharing (CORS) security handshakes between the extension client and active APIs.
+
 
 ### 6. Screenshots & Demo Link
 * **Live Portal:** [https://trustlens-steel.vercel.app/]
