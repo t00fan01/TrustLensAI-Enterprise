@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldAlert, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 
-import LiveDatabaseFeed from './LiveDatabaseFeed';
-
 const History = () => {
   const [history, setHistory] = useState([]);
 
@@ -90,9 +88,6 @@ const History = () => {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto mt-12 p-4 w-full">
-        <LiveDatabaseFeed />
-      </div>
     </div>
   );
 };
