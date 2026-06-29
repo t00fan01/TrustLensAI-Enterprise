@@ -119,6 +119,32 @@ function injectTrustLensShields() {
     });
 }
 
+function runLocalHeuristics(pageText, currentUrl) {
+    if (pageText.includes("setApprovalForAll") || pageText.includes("eth_signTypedData") || pageText.includes("window.ethereum.request")) {
+        return { classification: "Scam", risk_score: 98, reasons: ["Malicious Web3/crypto wallet drainer signatures detected."] };
+    }
+    const forms = document.querySelectorAll('form');
+    for (let f of forms) {
+        let action = f.getAttribute('action');
+        if (action) {
+            if (action.startsWith('http://')) {
+                return { classification: "High Risk", risk_score: 85, reasons: ["Insecure form action (HTTP) detected."] };
+            }
+            try {
+                let actionUrl = new URL(action, window.location.href);
+                if (actionUrl.hostname !== window.location.hostname) {
+                    return { classification: "Warning", risk_score: 75, reasons: ["Cross-domain form submission detected."] };
+                }
+            } catch(e) {}
+        }
+    }
+    const ipRegex = /^https?:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}/;
+    if (ipRegex.test(currentUrl)) {
+        return { classification: "Scam", risk_score: 99, reasons: ["Raw IP address URL detected (Phishing Indicator)."] };
+    }
+    return null;
+}
+
 async function activePageScanner() {
     const currentUrl = window.location.href;
     const currentHost = window.location.hostname;
@@ -135,10 +161,26 @@ async function activePageScanner() {
     try {
         const pageText = document.body.textContent.replace(/\s+/g, ' ').substring(0, 1200);
 
+        const localThreat = runLocalHeuristics(pageText, currentUrl);
+        if (localThreat) {
+            triggerFullScreenBlocker(localThreat);
+            return;
+        }
+
+        const has_login_forms = document.querySelectorAll('input[type="password"]').length > 0;
+        const external_links_count = Array.from(document.querySelectorAll('a')).filter(a => a.hostname && a.hostname !== currentHost).length;
+        const is_web3_active = typeof window.ethereum !== 'undefined';
+
         const response = await fetch(BACKGROUND_BLOCK_API, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: currentUrl, text_content: pageText })
+            body: JSON.stringify({ 
+                url: currentUrl, 
+                text_content: pageText,
+                has_login_forms: has_login_forms,
+                external_links_count: external_links_count,
+                is_web3_active: is_web3_active
+            })
         });
 
         const data = await response.json();

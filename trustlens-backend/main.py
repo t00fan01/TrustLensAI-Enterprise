@@ -42,6 +42,9 @@ groq_client = AsyncGroq(api_key=os.environ.get("GROQ_API_KEY")) if os.environ.ge
 class ScanRequest(BaseModel):
     url: str
     text_content: str
+    has_login_forms: bool = False
+    external_links_count: int = 0
+    is_web3_active: bool = False
 
 def get_domain(url_str: str) -> str:
     try:
@@ -75,14 +78,15 @@ async def analyze_threat(payload: ScanRequest):
         }
 
     system_prompt = """You are a cybersecurity expert analyzing a website for phishing, social engineering, and malicious intent.
-Analyze the provided URL and text content.
+Analyze the provided URL, text content, and DOM metadata.
+CRITICAL INSTRUCTION: You must severely increase the risk score and classify as "High Risk" or "Scam" if has_login_forms is true on an unverified domain, or if suspicious Web3 activity (is_web3_active) is detected.
 You MUST return your analysis strictly as a JSON object with this exact structure:
 {
   "classification": "Safe" | "Warning" | "High Risk" | "Scam",
   "risk_score": <int 0-100>,
   "reasons": ["string", "string"]
 }"""
-    user_prompt = f"URL: {payload.url}\n\nContent:\n{payload.text_content}"
+    user_prompt = f"URL: {payload.url}\nMetadata: has_login_forms={payload.has_login_forms}, external_links_count={payload.external_links_count}, is_web3_active={payload.is_web3_active}\n\nContent:\n{payload.text_content}"
 
     try:
         chat_completion = await groq_client.chat.completions.create(
