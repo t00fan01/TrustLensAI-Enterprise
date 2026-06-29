@@ -12,8 +12,8 @@ const Features = () => {
     },
     {
       icon: <Brain className="w-8 h-8 text-purple-500" />,
-      title: "AI Guardian Reasoning",
-      description: "Goes beyond simple blocklists. We leverage Groq's sub-second inference engine to analyze the actual contextual intent of a webpage to catch zero-day phishing.",
+      title: "Contextual Threat Reasoning",
+      description: "Goes beyond simple blocklists. We leverage a high-speed heuristic threat engine to analyze the actual contextual intent of a webpage to catch zero-day phishing.",
       color: "from-purple-500/10 to-transparent",
       borderColor: "group-hover:border-purple-500/30"
     },
@@ -27,7 +27,7 @@ const Features = () => {
     {
       icon: <Zap className="w-8 h-8 text-amber-500" />,
       title: "Lightning Fast Inference",
-      description: "Powered by Groq's LPUs, the AI Guardian model returns intent analysis in less than 800 milliseconds. Security without sacrificing browsing speed.",
+      description: "Powered by our local heuristics and caching engine, the threat oracle returns intent analysis in less than 800 milliseconds. Security without sacrificing browsing speed.",
       color: "from-amber-500/10 to-transparent",
       borderColor: "group-hover:border-amber-500/30"
     },
@@ -57,7 +57,7 @@ const Features = () => {
           Advanced Protection Features
         </h1>
         <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-          TrustLens AI combines the speed of local extension execution with the intelligence of large language models to secure your browsing experience.
+          TrustLens AI combines the speed of local extension execution with a decentralized threat intelligence cache to secure your browsing experience.
         </p>
       </div>
 
