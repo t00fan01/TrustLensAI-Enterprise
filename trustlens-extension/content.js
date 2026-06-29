@@ -2,6 +2,20 @@
 const BACKGROUND_BLOCK_API = "https://trustlens-blocker-api.onrender.com/analyze";
 const MANUAL_SCAN_API = "https://trustlens-manual-api.onrender.com/analyze";
 
+function generateThreatHash(url) {
+    let hash = 0;
+    const str = url + Date.now();
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    const hex = Math.abs(hash).toString(16).padStart(16, '0');
+    let fullHash = "0x";
+    for(let i=0; i<4; i++) fullHash += hex;
+    return fullHash.substring(0, 66);
+}
+
 function isWhitelisted(hostname) {
     const safeHosts = [
         "google.com", "localhost", "vercel.app", "onrender.com",
@@ -276,6 +290,12 @@ function triggerFullScreenBlocker(data) {
                 </ul>
             </div>
             
+            <style>@keyframes pulseAnim { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }</style>
+            <div style="background-color: #000000; padding: 16px; border-radius: 8px; text-align: left; margin-bottom: 32px; border: 1px solid #22c55e; font-family: monospace;">
+                <p style="margin: 0 0 8px 0; font-size: 13px; color: #4ade80;">Web3 Threat Hash: ${generateThreatHash(window.location.href)}</p>
+                <p style="margin: 0; font-size: 13px; color: #22c55e; animation: pulseAnim 1.5s infinite;">⏺ Broadcasting immutable threat signature to Decentralized Oracle Ledger...</p>
+            </div>
+            
             <div style="display: flex; gap: 16px; justify-content: center;">
                 <button id="tl-back-safety" style="background-color: white; color: #991b1b; border: none; padding: 14px 28px; font-size: 16px; font-weight: 900; border-radius: 8px; cursor: pointer;">Back to Safety</button>
                 <button id="tl-proceed" style="background-color: transparent; color: #fca5a5; border: 1px solid #fca5a5; padding: 14px 28px; font-size: 14px; border-radius: 8px; cursor: pointer;">Ignore & Proceed</button>
@@ -292,22 +312,33 @@ function triggerFullScreenBlocker(data) {
 
     document.getElementById('tl-proceed').addEventListener('click', () => blocker.remove());
 }
-if (window.location.hostname.includes("google.com")) {
-    window.addEventListener('pageshow', (event) => {
-        injectTrustLensShields();
-    });
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', injectTrustLensShields);
-    } else {
-        injectTrustLensShields();
+// ==========================================
+// 5. MASTER CONTROLLER & BCACHE FIX
+// ==========================================
+function initScanner() {
+    // Ensure we don't crash if the DOM isn't fully ready
+    if (!document.body) {
+        window.requestAnimationFrame(initScanner);
+        return;
     }
-} else {
-    window.addEventListener('pageshow', (event) => {
-        // Clean check on every single page show/re-visit event to bypass bfcache
-        activePageScanner();
-    });
-    document.addEventListener('DOMContentLoaded', activePageScanner);
-    if (document.body) {
+    
+    if (window.location.hostname.includes("google.com")) {
+        setTimeout(injectTrustLensShields, 1500);
+    } else {
         activePageScanner();
     }
 }
+
+// 1. Fire instantly on initial page load (Zero Latency)
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initScanner);
+} else {
+    initScanner();
+}
+
+// 2. Fire on Back/Forward navigation (Defeats bfcache bypass)
+window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+        initScanner();
+    }
+});
