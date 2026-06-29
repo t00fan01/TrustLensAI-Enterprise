@@ -48,7 +48,7 @@ uvicorn main:app --reload
 <h2 align="center">📸 Project Screenshots</h2>
 
 <p align="center">
-  <img src="https://github.com/t00fan01/TrustLensAI-Enterprise/blob/0a216daaf650c040f8589943c5246b70d03909ed/8018129b-8494-4435-8844-8eb065dd5850.jpeg" width="45%" />
+  <img src="https://github.com/t00fan01/TrustLensAI-Enterprise/blob/d70d2657679b7612186f7f228ba5419afd56e5f3/7ab59eae-d8c0-4b44-9b29-de3744317f4a.jpeg" width="45%" />
   <img src="https://github.com/t00fan01/TrustLensAI-Enterprise/blob/0a216daaf650c040f8589943c5246b70d03909ed/jhbwti357itw4uth4t8858tubt.jpeg" width="45%" />
 </p>
 
