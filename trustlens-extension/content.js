@@ -79,7 +79,7 @@ function injectTrustLensShields() {
                 popup.innerHTML = `
                     <div style="padding: 20px; text-align: center; color: #a1a1aa;">
                         <div style="font-weight: 700; font-size: 16px;">Scanning Link... 🧠</div>
-                        <div style="font-size: 13px; margin-top: 6px;">Analyzing intent with LLaMA 3.1</div>
+                        <div style="font-size: 13px; margin-top: 6px;">Analyzing intent with AI Guardian</div>
                     </div>
                 `;
                 popup.style.display = 'block';

@@ -25,7 +25,7 @@ A context-aware cyber safety agent that detects zero-day phishing and social eng
 ### 4. AI Tools Disclosure Table
 | Tool Used | Purpose | Section / Feature Applied To |
 | :--- | :--- | :--- |
-| Gemini / LLaMA 3.1 | Core heuristic analysis | Backend intent-evaluation engine |
+| Gemini / AI Guardian | Core heuristic analysis | Backend intent-evaluation engine |
 | Cursor / Antigravity | Code formatting & refactoring | React component styling and code cleanup |
 
 ### 5. Team Members & Roles

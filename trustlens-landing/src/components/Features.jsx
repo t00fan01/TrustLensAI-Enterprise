@@ -12,7 +12,7 @@ const Features = () => {
     },
     {
       icon: <Brain className="w-8 h-8 text-purple-500" />,
-      title: "LLaMA 3.1 Reasoning",
+      title: "AI Guardian Reasoning",
       description: "Goes beyond simple blocklists. We leverage Groq's sub-second inference engine to analyze the actual contextual intent of a webpage to catch zero-day phishing.",
       color: "from-purple-500/10 to-transparent",
       borderColor: "group-hover:border-purple-500/30"
@@ -27,7 +27,7 @@ const Features = () => {
     {
       icon: <Zap className="w-8 h-8 text-amber-500" />,
       title: "Lightning Fast Inference",
-      description: "Powered by Groq's LPUs, the LLaMA 3.1 model returns intent analysis in less than 800 milliseconds. Security without sacrificing browsing speed.",
+      description: "Powered by Groq's LPUs, the AI Guardian model returns intent analysis in less than 800 milliseconds. Security without sacrificing browsing speed.",
       color: "from-amber-500/10 to-transparent",
       borderColor: "group-hover:border-amber-500/30"
     },

@@ -38,7 +38,7 @@ const NavigationBar = () => {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 text-xs font-mono text-teal-700 px-3 py-1.5 bg-teal-50 rounded-full border border-teal-100">
           <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse-glow"></div>
-          LLaMA 3.1 Active
+          System Active
         </div>
       </div>
     </header>

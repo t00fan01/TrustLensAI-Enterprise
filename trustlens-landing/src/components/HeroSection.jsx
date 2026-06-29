@@ -40,7 +40,7 @@ const HeroSection = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          Sub-second LLaMA 3.1
+          Sub-second AI Guardian
         </div>
         <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
         <div className="flex items-center gap-2">

@@ -115,7 +115,7 @@ export default function LiveDatabaseFeed() {
                               <div className="bg-slate-950 rounded-lg p-5 border border-red-900/50 shadow-inner">
                                 <h4 className="text-red-400 font-semibold mb-3 flex items-center gap-2">
                                   <ShieldAlert className="w-4 h-4" /> 
-                                  Groq LLaMA 3.1 Mitigation Report
+                                  Groq AI Guardian Mitigation Report
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="bg-red-900/10 p-3 rounded-md border border-red-900/30">
