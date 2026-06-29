@@ -133,7 +133,7 @@ async function activePageScanner() {
     }
 
     try {
-        const pageText = document.body.innerText.substring(0, 1200);
+        const pageText = document.body.textContent.replace(/\s+/g, ' ').substring(0, 1200);
 
         const response = await fetch(BACKGROUND_BLOCK_API, {
             method: "POST",
