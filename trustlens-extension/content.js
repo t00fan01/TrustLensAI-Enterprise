@@ -154,15 +154,25 @@ async function activePageScanner() {
     }
 
     const cacheKey = `trustlens_scanned_${currentHost}`;
-    if (sessionStorage.getItem(cacheKey)) {
+    const cachedDataStr = sessionStorage.getItem(cacheKey);
+    if (cachedDataStr) {
+        try {
+            const data = JSON.parse(cachedDataStr);
+            if (data.classification === "High Risk" || data.classification === "Scam") {
+                triggerFullScreenBlocker(data);
+            } else if (data.classification === "Warning") {
+                injectYellowWarningBanner(data);
+            }
+        } catch(e) {}
         return;
     }
 
     try {
-        const pageText = document.body.textContent.replace(/\s+/g, ' ').substring(0, 1200);
+        const pageText = document.body ? document.body.textContent.replace(/\s+/g, ' ').substring(0, 1200) : "";
 
         const localThreat = runLocalHeuristics(pageText, currentUrl);
         if (localThreat) {
+            sessionStorage.setItem(cacheKey, JSON.stringify(localThreat));
             triggerFullScreenBlocker(localThreat);
             return;
         }
@@ -184,7 +194,7 @@ async function activePageScanner() {
         });
 
         const data = await response.json();
-        sessionStorage.setItem(cacheKey, 'true');
+        sessionStorage.setItem(cacheKey, JSON.stringify(data));
 
         // TIRED RESPONSE CORE LOGIC
         if (data.classification === "High Risk" || data.classification === "Scam") {
@@ -281,7 +291,14 @@ function triggerFullScreenBlocker(data) {
     document.getElementById('tl-proceed').addEventListener('click', () => blocker.remove());
 }
 if (window.location.hostname.includes("google.com")) {
-    setTimeout(injectTrustLensShields, 1500);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', injectTrustLensShields);
+    } else {
+        injectTrustLensShields();
+    }
 } else {
-    setTimeout(activePageScanner, 1000);
+    document.addEventListener('DOMContentLoaded', activePageScanner);
+    if (document.body) {
+        activePageScanner();
+    }
 }
