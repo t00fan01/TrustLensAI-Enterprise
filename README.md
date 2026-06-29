@@ -1,113 +1,48 @@
-# 🛡️ Project Title
+# Project title and one-line description
+**TrustLens AI**  
+A context-aware cyber safety agent that detects zero-day phishing and Web3 drainer threats in real-time using a hybrid heuristic and LLM pipeline.
 
-- **TrustLens AI**
-- A context-aware cyber safety agent that detects zero-day phishing and social engineering attacks using intent-based heuristic evaluation.
+# Problem statement and solution overview
+Modern phishing attacks and malicious Web3 smart contracts bypass traditional static blocklists. Our solution is a 'Silent Guardian' tiered pipeline: local DOM heuristics instantly catch Web3 wallet drainers and form hijacking in 0ms, while a SQLite cache and Groq LLaMA 3.1 backend provide deep, sub-second contextual intent analysis.
 
----
+# Tech stack
+- **Frontend:** React, Vite, Tailwind CSS
+- **Extension:** Chrome Manifest V3, Vanilla JS
+- **Backend:** Python, FastAPI, SQLite, Groq API (LLaMA 3.1)
 
-# ⚠️ Problem Statement & Solution Overview
+# Installation and setup instructions
 
-### Problem Statement
-Traditional security tools rely on reactive blocklists of known malicious URLs, leaving users vulnerable to newly created (zero-day) phishing, Web3 wallet drainers, and KYC scams.
+1. **Load Browser Extension:**
+   - Open Chrome and navigate to `chrome://extensions/`.
+   - Enable "Developer mode" in the top right.
+   - Click "Load unpacked" and select the `trustlens-extension` directory.
+2. **Run Backend Locally:**
+   - Navigate to the `trustlens-backend` directory.
+   - Install dependencies: `pip install -r requirements.txt`
+   - Start the server: `uvicorn main:app --reload`
+3. **Frontend Dashboard:**
+   - The live dashboard is deployed at: [https://trustlens-steel.vercel.app](https://trustlens-steel.vercel.app)
 
-### Solution Overview
-**TrustLens AI** utilizes a high-performance **Tiered Pipeline Architecture** for intent-based heuristic evaluation. It analyzes raw DOM metadata, flags local heuristics (like malicious Web3 signatures and form hijacking) in 0 milliseconds, and uses a contextual AI engine in real-time to identify psychological manipulation tactics, halting zero-day threats before they execute.
-
----
-
-# 💻 Tech Stack
-
-| Domain | Technologies |
-| :--- | :--- |
-| **Frontend** | React, Vite, Tailwind CSS |
-| **Backend** | Python, FastAPI, SQLite |
-| **AI / ML** | Groq LLaMA 3.1 |
-| **Browser Extension** | Chrome Manifest V3, Vanilla JS |
-| **Deployment** | Render (Backend API), Vercel (Frontend Site) |
-
----
-
-# ⚙️ Installation & Setup Instructions
-
-### Prerequisites
-- Node.js (v16+)
-- Python (3.9+)
-- Google Chrome Browser
-
-### 1. Clone Repository
-```bash
-git clone https://github.com/t00fan01/TrustLensAI-Enterprise.git
-cd TrustLensAI-Enterprise
-```
-
-### 2. Install Dependencies
-
-**Backend:**
-```bash
-cd trustlens-backend
-pip install -r requirements.txt
-```
-
-**Frontend:**
-```bash
-cd ../trustlens-landing
-npm install
-```
-
-### 3. Environment Variables
-Create a `.env` file in the `trustlens-backend` directory and add your Groq API key:
-```env
-GROQ_API_KEY=your_groq_api_key_here
-```
-
-### 4. Run Backend
-Navigate to the `trustlens-backend` directory and start the server:
-```bash
-uvicorn main:app --reload
-```
-
-### 5. Run Frontend
-Navigate to the `trustlens-landing` directory and start the development server:
-```bash
-npm run dev
-```
-
-### 6. Load Browser Extension (if applicable)
-1. Open Google Chrome and navigate to `chrome://extensions`.
-2. Toggle **Developer mode** in the top right corner.
-3. Click **Load unpacked** and select the `trustlens-extension` folder from the cloned repository.
-
-### 7. Run Project
-Ensure both the backend API and frontend site are running concurrently. With the extension loaded, navigate to any unverified URL or trigger a Google search to see the active page scanning and Live Threat Scanner in action.
-
-### Local Setup Instructions
-For a quick local start on Windows environments, you can simply execute the provided batch scripts in the root directory:
-- `run_backend.bat`
-- `run_landing.bat`
-
----
-
-# 🤖 AI Tools Disclosure
+# AI Tools Disclosure Table
 
 | Tool Used | Purpose | Section / Feature Applied To |
-| :--- | :--- | :--- |
-| **Groq LLaMA 3.1** | Core heuristic intent analysis | Backend API Threat Engine |
-| **Antigravity (Gemini 3.1 Pro)** | Code optimization, refactoring, and AI integration | Full-Stack (Backend, Extension, Frontend) |
+|-----------|----------|------------------------------|
+| Gemini | Architectural strategy, UI design, and hybrid ML logic | Overall Architecture & Dashboard |
+| Antigravity | Code generation, rapid refactoring, and bfcache bug fixing | Backend API & Extension content.js |
 
----
-
-# 👥 Team Members & Roles
+# Team members and roles
 
 | Name | Role |
-| :--- | :--- |
-| **Lakshya Malviya** | Lead Full-Stack Developer & Security Architect |
-| **Anuj Malviya** | Frontend Engineer & UI/UX Specialist |
-| **Ishan Tomar** | Security Extensions & Integration Engineer |
+|------|------|
+| Lakshya Malviya | Lead Full-Stack Developer & Security Architect |
+| Anuj Malviya | Frontend Engineer & UI/UX Specialist |
+| Ishan Tomar | Security Extensions & Integration Engineer |
 
----
+# Screenshots and/or demo link
 
-# 📸 Screenshots / Demo
+**Demo Link:** [https://trustlens-steel.vercel.app](https://trustlens-steel.vercel.app)
 
-**Demo Link:** [https://trustlens-steel.vercel.app/](https://trustlens-steel.vercel.app/)
-
-**Project Screenshots:** To be added
+![Dashboard Screenshot](link)
+![Search Threat Scan Screenshot](link)
+![Warning Notification Screenshot](link)
+![Deceptive Site Blocker Screenshot](link)
