@@ -110,4 +110,4 @@ For a quick local start on Windows environments, you can simply execute the prov
 
 **Demo Link:** [https://trustlens-steel.vercel.app/](https://trustlens-steel.vercel.app/)
 
-**Project Screenshots:** *To be added
+**Project Screenshots:** To be added
