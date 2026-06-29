@@ -30,8 +30,8 @@ A context-aware cyber safety agent that detects zero-day phishing and social eng
 
 ### 5. Team Members & Roles
 * **[LAKSHYA]** - Lead Full-Stack Developer & Security Architect
-* **[ANUJ MALVIYA ]** - [Data Base]
+* **[ANUJ MALVIYA ]** - [
 * **[Ishan Singh ]** - [ML Model]
 
 ### 6. Screenshots & Demo Link
-* **Live Portal:** [https://aladin-smoky.vercel.app/]
+* **Live Portal:** [https://trustlens-steel.vercel.app/]
