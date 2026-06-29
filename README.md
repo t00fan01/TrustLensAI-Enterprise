@@ -16,8 +16,9 @@ Modern phishing attacks no longer just steal passwords; they utilize malicious s
 
 ### Tech Stack
 * **Frontend Dashboard:** React, Vite, Tailwind CSS
-* **Extension Engine:** Chrome Manifest V3, Vanilla JS, DOM Heuristics
+* **Extension Engine:** Chrome Manifest V3, Vanilla JavaScript, DOM Heuristics
 * **Backend Sentinel:** Python, FastAPI, SQLite (Threat Intelligence Cache)
+* **Cloud Infrastructure:** Vercel (Frontend), Render (Backend API)
 
 ### Installation and Setup Instructions
 **1. Backend Setup (Local):**
@@ -26,10 +27,13 @@ cd trustlens-backend
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
-**2. Extension Setup:**
-* Open Chrome and navigate to `chrome://extensions/`
-* Enable "Developer mode" in the top right.
-* Click "Load unpacked" and select the `trustlens-extension` directory.
+### Installing the TrustLens Browser Extension
+1. Open Google Chrome (or any Chromium-based browser like Edge/Brave).
+2. In the URL search bar at the top, type exactly: \`chrome://extensions/\` and hit Enter.
+3. In the top-right corner of the Extensions page, toggle **"Developer mode"** to **ON**.
+4. In the top-left corner, click the **"Load unpacked"** button.
+5. A file browser window will open. Select the \`trustlens-extension\` folder from this repository.
+6. The TrustLens AI shield icon will now appear in your browser toolbar, actively protecting your session!
 
 ### AI Tools Disclosure Table
 | Tool Used | Purpose | Section / Feature Applied To |
