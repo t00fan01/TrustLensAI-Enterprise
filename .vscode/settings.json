@@ -1,0 +1,16 @@
+{
+    "python.analysis.extraPaths": [
+        "./trustlens-dashboard/venv/Lib/site-packages",
+        "./trustlens-backend/venv/Lib/site-packages",
+        "./trustlens-dashboard",
+        "./trustlens-backend"
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "terminal.integrated.cwd": "c:/Users/SOMYA AWASTHI/OneDrive/Desktop/Prjts/TrustLensAI",
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/venv": false
+    }
+}
