@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><head><title>B-02 Lazy Image Load</title></head><body>
+<h1>Photo Gallery</h1>
+<script>
+setTimeout(() => {
+    const img = document.createElement('img');
+    img.src = 'https://picsum.photos/200';
+    img.alt = 'Gallery image';
+    document.body.appendChild(img);
+}, 1500);
+</script>
+</body></html>

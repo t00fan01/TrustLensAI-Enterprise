@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html><head><title>B-11 Visible Iframe Dynamically Added</title></head><body>
+<h1>Partner Content</h1>
+<script>
+setTimeout(() => {
+    const iframe = document.createElement('iframe');
+    iframe.src    = 'https://example.com';
+    iframe.width  = '600';
+    iframe.height = '400';
+    iframe.title  = 'Partner embed';
+    document.body.appendChild(iframe);
+}, 1200);
+</script>
+</body></html>

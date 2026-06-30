@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><title>B-03 Legitimate Login Page</title></head><body>
+<h1>Sign In</h1>
+<form>
+    <label>Username: <input type="text" name="username"></label><br>
+    <label>Password: <input type="password" name="password"></label><br>
+    <button type="submit">Log In</button>
+</form>
+<script>
+// Password field injected at 2400ms — strictly BELOW the 2500ms detection window.
+// This is the boundary test: engine must NOT fire for sub-threshold timing.
+setTimeout(() => {
+    const hint = document.createElement('p');
+    hint.textContent = 'Forgot your password? Click here to reset.';
+    const inp = document.createElement('input');
+    inp.type = 'password';
+    inp.placeholder = 'Confirm new password';
+    document.body.appendChild(hint);
+    document.body.appendChild(inp);
+}, 2400);
+</script>
+</body></html>

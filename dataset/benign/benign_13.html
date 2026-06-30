@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html><head><title>B-13 Dynamic Modal Dialog</title></head><body>
+<h1>E-Commerce Store</h1>
+<p>Browse our products below.</p>
+<script>
+setTimeout(() => {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:20px;border:1px solid #ccc;border-radius:8px;';
+    modal.innerHTML = '<h2>Special Offer!</h2><p>Use code SAVE20 for 20% off.</p><button onclick="this.parentNode.remove()">Close</button>';
+    document.body.appendChild(modal);
+}, 2000);
+</script>
+</body></html>

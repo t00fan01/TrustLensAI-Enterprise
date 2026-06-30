@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html><head><title>M-05 Multi-Signal: Hidden Iframe + Password</title></head><body>
+<h1>Verify Your Identity</h1>
+<script>
+setTimeout(() => {
+    const iframe = document.createElement('iframe');
+    iframe.style.visibility = 'hidden';
+    iframe.src = 'https://tracker.evil.example/log';
+    document.body.appendChild(iframe);
+}, 900);
+setTimeout(() => {
+    const inp = document.createElement('input');
+    inp.type = 'password';
+    document.body.appendChild(inp);
+}, 2700);
+</script>
+</body></html>

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><head><title>B-14 Single eval() — Sub-Threshold</title></head><body>
+<h1>Math Widget</h1>
+<p id="result"></p>
+<script>
+setTimeout(() => {
+    const s = document.createElement('script');
+    s.textContent = 'document.getElementById("result").textContent = eval("2 + 2");';
+    document.body.appendChild(s);
+}, 800);
+</script>
+</body></html>

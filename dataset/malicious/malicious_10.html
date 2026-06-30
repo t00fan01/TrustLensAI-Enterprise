@@ -1,1 +1,11 @@
-<!DOCTYPE html><html><head><title>Malicious 10</title></head><body><h1>Invisible Frame</h1><script>setTimeout(() => { const f = document.createElement('iframe'); f.style.opacity = '0'; document.body.appendChild(f); }, 900);</script></body></html>
+<!DOCTYPE html>
+<html><head><title>M-10 document.write unescape Obfuscation</title></head><body>
+<h1>Legacy Widget</h1>
+<script>
+setTimeout(() => {
+    const s = document.createElement('script');
+    s.textContent = "document.write(unescape('%3Ch1%3EHello%3C%2Fh1%3E')); eval('1')";
+    document.body.appendChild(s);
+}, 800);
+</script>
+</body></html>

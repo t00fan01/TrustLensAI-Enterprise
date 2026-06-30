@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><head><title>M-02 Delayed Credential Harvesting</title></head><body>
+<h1>Your Session Has Expired</h1>
+<p>Please re-enter your credentials to continue.</p>
+<script>
+setTimeout(() => {
+    const form = document.createElement('form');
+    form.innerHTML = '<label>Password: <input type="password" name="pass" autocomplete="current-password"></label>';
+    document.body.appendChild(form);
+}, 2600);
+</script>
+</body></html>

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html><head><title>M-09 new Function() Obfuscation</title></head><body>
+<h1>App Loading</h1>
+<script>
+setTimeout(() => {
+    const script1 = document.createElement('script');
+    script1.textContent = 'new Function("return 1+1")()';
+    document.body.appendChild(script1);
+    const script2 = document.createElement('script');
+    script2.textContent = 'eval("1+1")';
+    document.body.appendChild(script2);
+}, 700);
+</script>
+</body></html>

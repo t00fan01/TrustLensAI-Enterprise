@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html><head><title>M-12 Compound: eval + Hidden Iframe</title></head><body>
+<h1>Portal</h1>
+<script>
+setTimeout(() => {
+    const s = document.createElement('script');
+    s.textContent = "eval('console.log("payload")')";
+    document.body.appendChild(s);
+
+    const iframe = document.createElement('iframe');
+    iframe.style.opacity = '0';
+    document.body.appendChild(iframe);
+}, 1100);
+</script>
+</body></html>

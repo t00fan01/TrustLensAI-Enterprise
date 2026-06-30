@@ -1,443 +1,440 @@
+/**
+ * TrustLensAI — Unified Content Script
+ * Version: 1.1
+ *
+ * Architecture:
+ *   Layer 1 — Baseline Heuristic Engine
+ *             Synchronous checks against the page URL at document_start.
+ *             Contributes risk score based on URL structure signals.
+ *
+ *   Layer 2 — Tier 2.5 Behavioral Detection Engine
+ *             MutationObserver-driven runtime analysis.
+ *             Catches dynamic phishing, hidden iframes, and obfuscated/
+ *             encoded script execution payloads injected after page load.
+ *
+ * Trigger: riskScore >= 50 → full-screen red blocker UI rendered.
+ * The blocker fires once only (isBlocked guard prevents duplicate renders).
+ */
 
-const BACKGROUND_BLOCK_API = "https://trustlens-blocker-api.onrender.com/analyze";
-const MANUAL_SCAN_API = "https://trustlens-manual-api.onrender.com/analyze";
+// ─────────────────────────────────────────────────────────────────────────────
+//  SHARED STATE
+//  A single risk score accumulates signals from both layers.
+// ─────────────────────────────────────────────────────────────────────────────
+const TrustLens = (() => {
+    const BLOCK_THRESHOLD = 50;
 
-function generateThreatHash(url) {
-    let hash = 0;
-    const str = url + Date.now();
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
+    let riskScore      = 0;
+    let isBlocked      = false;
+    let pageLoadTime   = Date.now();
+    const signalLog    = [];   // Audit trail of every triggered signal
+
+    // ── Signal recorder ──────────────────────────────────────────────────────
+    function recordSignal(description, weight) {
+        console.warn(
+            `[TrustLensAI] Signal detected: "${description}" | Weight: +${weight} | ` +
+            `Running score: ${riskScore + weight}`
+        );
+        riskScore += weight;
+        signalLog.push({ description, weight, totalAfter: riskScore });
+        evaluateThreshold();
     }
-    const hex = Math.abs(hash).toString(16).padStart(16, '0');
-    let fullHash = "0x";
-    for(let i=0; i<4; i++) fullHash += hex;
-    return fullHash.substring(0, 66);
-}
 
-function isWhitelisted(hostname) {
-    const safeHosts = [
-        "google.com", "localhost", "vercel.app", "onrender.com",
-        "youtube.com", "github.com", "linkedin.com", "wikipedia.org",
-        "geeksforgeeks.org", "stackoverflow.com", "osfhackthone.in",
-        "chatgpt.com", "openai.com", "claude.ai", "microsoft.com",
-        "apple.com", "amazon.com", "netflix.com", "twitter.com", "x.com"
-    ];
-    return safeHosts.some(safe => hostname.includes(safe));
-}
+    // ── Threshold evaluator ───────────────────────────────────────────────────
+    function evaluateThreshold() {
+        if (riskScore >= BLOCK_THRESHOLD && !isBlocked) {
+            isBlocked = true;
+            renderBlockerUI();
+        }
+    }
 
-function injectTrustLensShields() {
-    const searchResults = document.querySelectorAll('a h3');
-    const logoUrl = chrome.runtime.getURL("logo.png");
+    // ── Full-screen Blocker UI ────────────────────────────────────────────────
+    function renderBlockerUI() {
+        console.error(
+            `[TrustLensAI] THREAT CONFIRMED — Risk score ${riskScore}/${BLOCK_THRESHOLD} threshold crossed. ` +
+            `Rendering full-screen blocker.`
+        );
 
-    searchResults.forEach(header => {
-        const linkElement = header.closest('a');
-        if (linkElement && !linkElement.hasAttribute('data-trustlens-injected')) {
-            linkElement.setAttribute('data-trustlens-injected', 'true');
+        // Remove any pre-existing blocker (defensive)
+        const existing = document.getElementById('trustlens-block-screen');
+        if (existing) existing.remove();
 
-            const container = document.createElement('span');
-            container.style.position = 'relative';
-            container.style.display = 'inline-flex';
-            container.style.alignItems = 'center';
-            container.style.marginLeft = '8px';
-            container.style.verticalAlign = 'middle';
+        // Build signal list for the UI
+        const signalListHTML = signalLog
+            .map(s => `<li>${s.description} <span style="color:#fca5a5;">(+${s.weight} pts)</span></li>`)
+            .join('');
 
-            container.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            });
+        // Overlay container
+        const blockScreen = document.createElement('div');
+        blockScreen.id = 'trustlens-block-screen';
+        blockScreen.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 60%, #1a0000 100%) !important;
+            color: #ffffff !important;
+            z-index: 2147483647 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            font-family: 'Segoe UI', Arial, sans-serif !important;
+            text-align: center !important;
+            padding: 40px !important;
+            box-sizing: border-box !important;
+            animation: tl-fadein 0.4s ease !important;
+        `;
 
-            const shieldBtn = document.createElement('img');
-            shieldBtn.src = logoUrl;
-            shieldBtn.style.width = '20px';
-            shieldBtn.style.height = '20px';
-            shieldBtn.style.cursor = 'pointer';
-            shieldBtn.style.borderRadius = '6px';
-            shieldBtn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.4)';
-            shieldBtn.style.transition = 'transform 0.2s ease';
-            shieldBtn.style.backgroundColor = '#ffffff';
-            shieldBtn.style.border = '1px solid #e2e8f0';
-
-            shieldBtn.onmouseover = () => shieldBtn.style.transform = 'scale(1.1)';
-            shieldBtn.onmouseout = () => shieldBtn.style.transform = 'scale(1)';
-
-            const popup = document.createElement('div');
-            popup.style.display = 'none';
-            popup.style.position = 'absolute';
-            popup.style.width = '340px';
-            popup.style.backgroundColor = '#0f172a';
-            popup.style.color = '#ffffff';
-            popup.style.borderRadius = '12px';
-            popup.style.padding = '16px';
-            popup.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
-            popup.style.zIndex = '2147483647';
-            popup.style.top = '25px';
-            popup.style.left = '0';
-
-            container.appendChild(shieldBtn);
-            container.appendChild(popup);
-            header.appendChild(container);
-
-            shieldBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                if (popup.style.display === 'block') {
-                    popup.style.display = 'none';
-                    return;
+        blockScreen.innerHTML = `
+            <style>
+                @keyframes tl-fadein {
+                    from { opacity: 0; transform: scale(1.02); }
+                    to   { opacity: 1; transform: scale(1);    }
                 }
-
-                popup.style.display = 'block';
-                popup.innerHTML = `<p style="margin:0;font-family:sans-serif;font-size:13px;color:#94a3b8;">Analyzing link target...</p>`;
-
-                const targetUrl = linkElement.href;
-                try {
-                    const urlObj = new URL(targetUrl);
-                    if (isWhitelisted(urlObj.hostname)) {
-                        popup.innerHTML = `
-                            <h4 style="margin:0 0 4px 0;color:#10b981;font-size:14px;font-weight:bold;">✓ Verified Safe</h4>
-                            <p style="margin:0;font-size:12px;color:#cbd5e1;">This domain belongs to an verified high-authority trusted platform.</p>
-                        `;
-                        return;
-                    }
-                } catch (err) { }
-
-                try {
-                    const response = await fetch(MANUAL_SCAN_API, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ url: targetUrl, text_content: "Google Search Link Click Scan" })
-                    });
-                    const data = await response.json();
-
-                    let headerBg = data.classification === "Safe" ? '#0d9488' : (data.classification === "Warning" ? '#d97706' : '#dc2626');
-                    let icon = data.classification === "Safe" ? '✅' : (data.classification === "Warning" ? '⚠️' : '🚨');
-
-                    popup.innerHTML = `
-                        <div style="background-color: ${headerBg}; padding: 10px; margin: -16px -16px 12px -16px; text-align: center; font-weight: bold; border-top-left-radius: 12px; border-top-right-radius: 12px;">
-                            ${icon} ${data.classification} (${data.risk_score}/100)
-                        </div>
-                        <p style="margin:0 0 8px 0; font-size:13px; font-weight:bold;">AI Assessment:</p>
-                        <ul style="margin:0; padding-left:16px; font-size:12px; color:#cbd5e1; line-height:1.4;">
-                            ${data.reasons.map(r => `<li style="margin-bottom:4px;">${r}</li>`).join('')}
-                        </ul>
-                    `;
-                } catch (error) {
-                    popup.innerHTML = `<p style="margin:0;color:#ef4444;font-size:12px;">Engine offline or rate limited.</p>`;
+                @keyframes tl-pulse-ring {
+                    0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+                    70%  { box-shadow: 0 0 0 24px rgba(239,68,68,0); }
+                    100% { box-shadow: 0 0 0 0 rgba(239,68,68,0);   }
                 }
-            });
-
-            document.addEventListener('click', () => popup.style.display = 'none');
-        }
-    });
-}
-
-function runLocalHeuristics(pageText, currentUrl) {
-    if (pageText.includes("setApprovalForAll") || pageText.includes("eth_signTypedData") || pageText.includes("window.ethereum.request")) {
-        return { classification: "Scam", risk_score: 98, reasons: ["Malicious Web3/crypto wallet drainer signatures detected."] };
-    }
-    const forms = document.querySelectorAll('form');
-    for (let f of forms) {
-        let action = f.getAttribute('action');
-        if (action) {
-            if (action.startsWith('http://')) {
-                return { classification: "High Risk", risk_score: 85, reasons: ["Insecure form action (HTTP) detected."] };
-            }
-            try {
-                let actionUrl = new URL(action, window.location.href);
-                if (actionUrl.hostname !== window.location.hostname) {
-                    return { classification: "Warning", risk_score: 75, reasons: ["Cross-domain form submission detected."] };
+                #tl-icon-wrap {
+                    width: 80px; height: 80px;
+                    background: rgba(239,68,68,0.15);
+                    border: 2px solid rgba(239,68,68,0.5);
+                    border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    margin: 0 auto 24px;
+                    animation: tl-pulse-ring 2s infinite;
                 }
-            } catch(e) {}
-        }
-    }
-    const ipRegex = /^https?:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}/;
-    if (ipRegex.test(currentUrl)) {
-        return { classification: "Scam", risk_score: 99, reasons: ["Raw IP address URL detected (Phishing Indicator)."] };
-    }
-    return null;
-}
+                #tl-icon-wrap svg { width: 40px; height: 40px; }
+                #tl-title {
+                    font-size: 2.6rem;
+                    font-weight: 800;
+                    letter-spacing: -0.03em;
+                    margin: 0 0 12px;
+                    color: #fef2f2;
+                    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+                }
+                #tl-subtitle {
+                    font-size: 1.1rem;
+                    color: #fca5a5;
+                    margin: 0 0 28px;
+                    max-width: 560px;
+                    line-height: 1.6;
+                }
+                #tl-score-badge {
+                    display: inline-block;
+                    background: rgba(239,68,68,0.2);
+                    border: 1px solid rgba(239,68,68,0.4);
+                    border-radius: 999px;
+                    padding: 6px 20px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    color: #fca5a5;
+                    margin-bottom: 28px;
+                    letter-spacing: 0.05em;
+                }
+                #tl-signals-box {
+                    background: rgba(0,0,0,0.35);
+                    border: 1px solid rgba(239,68,68,0.25);
+                    border-radius: 12px;
+                    padding: 16px 24px;
+                    max-width: 600px;
+                    width: 100%;
+                    text-align: left;
+                    margin-bottom: 28px;
+                }
+                #tl-signals-box h4 {
+                    margin: 0 0 10px;
+                    font-size: 0.78rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                    color: #f87171;
+                    font-weight: 700;
+                }
+                #tl-signals-box ul {
+                    margin: 0; padding: 0 0 0 18px;
+                    color: #fecaca;
+                    font-size: 0.88rem;
+                    line-height: 1.8;
+                }
+                #tl-leave-btn {
+                    background: linear-gradient(135deg, #dc2626, #991b1b) !important;
+                    color: #fff !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 10px !important;
+                    padding: 14px 36px !important;
+                    font-size: 1rem !important;
+                    font-weight: 700 !important;
+                    cursor: pointer !important;
+                    letter-spacing: 0.03em !important;
+                    box-shadow: 0 6px 20px rgba(185,28,28,0.5) !important;
+                    transition: filter 0.2s ease, transform 0.2s ease !important;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+                }
+                #tl-leave-btn:hover {
+                    filter: brightness(1.15) !important;
+                    transform: translateY(-2px) !important;
+                }
+                #tl-footer {
+                    margin-top: 24px;
+                    font-size: 0.72rem;
+                    color: rgba(252,165,165,0.45);
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                }
+            </style>
 
-async function activePageScanner() {
-    const currentUrl = window.location.href;
-    const currentHost = window.location.hostname;
+            <div id="tl-icon-wrap">
+                <!-- Shield warning SVG -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+            </div>
 
-    if (isWhitelisted(currentHost)) {
-        return;
-    }
-
-    const cacheKey = `trustlens_scanned_${currentHost}`;
-    const cachedDataStr = sessionStorage.getItem(cacheKey);
-    if (cachedDataStr) {
-        try {
-            const data = JSON.parse(cachedDataStr);
-            if (data.classification === "High Risk" || data.classification === "Scam") {
-                triggerFullScreenBlocker(data);
-                return;
-            } else if (data.classification === "Warning") {
-                injectYellowWarningBanner(data);
-                return;
-            }
-        } catch(e) {}
-        return;
-    }
-
-    try {
-        const pageText = document.body ? document.body.textContent.replace(/\s+/g, ' ').substring(0, 1200) : "";
-
-        const localThreat = runLocalHeuristics(pageText, currentUrl);
-        if (localThreat) {
-            sessionStorage.setItem(cacheKey, JSON.stringify(localThreat));
-            triggerFullScreenBlocker(localThreat);
-            return;
-        }
-
-        const has_login_forms = document.querySelectorAll('input[type="password"]').length > 0;
-        const external_links_count = Array.from(document.querySelectorAll('a')).filter(a => a.hostname && a.hostname !== currentHost).length;
-        const is_web3_active = typeof window.ethereum !== 'undefined';
-
-        const response = await fetch(BACKGROUND_BLOCK_API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                url: currentUrl, 
-                text_content: pageText,
-                has_login_forms: has_login_forms,
-                external_links_count: external_links_count,
-                is_web3_active: is_web3_active
-            })
-        });
-
-        const data = await response.json();
-        sessionStorage.setItem(cacheKey, JSON.stringify(data));
-
-        // TIRED RESPONSE CORE LOGIC
-        if (data.classification === "High Risk" || data.classification === "Scam") {
-            triggerFullScreenBlocker(data);
-        } else if (data.classification === "Warning") {
-            injectYellowWarningBanner(data);
-        }
-    } catch (error) {
-        console.log("TrustLens: Network gateway optimized.");
-    }
-}
-
-function injectYellowWarningBanner(data) {
-    const banner = document.createElement('div');
-    banner.style.position = 'fixed';
-    banner.style.top = '0';
-    banner.style.left = '0';
-    banner.style.width = '100vw';
-    banner.style.backgroundColor = '#fef08a';
-    banner.style.borderBottom = '2px solid #eab308';
-    banner.style.color = '#854d0e';
-    banner.style.padding = '12px 24px';
-    banner.style.zIndex = '2147483647';
-    banner.style.fontFamily = 'sans-serif';
-    banner.style.fontSize = '14px';
-    banner.style.display = 'flex';
-    banner.style.justifyContent = 'space-between';
-    banner.style.alignItems = 'center';
-    banner.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1)';
-
-    banner.innerHTML = `
-        <div style="display:flex; align-items:center; gap:8px;">
-            <span>⚠️</span>
-            <span><strong>TrustLens AI Warning:</strong> This page shows suspicious indicators (Risk: ${data.risk_score}/100). Reason: <em>${data.reasons[0]}</em></span>
-        </div>
-        <button id="tl-close-banner" style="background:transparent; border:1px solid #ca8a04; color:#854d0e; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">Dismiss</button>
-    `;
-
-    document.body.appendChild(banner);
-    document.body.style.marginTop = '45px';
-
-    document.getElementById('tl-close-banner').addEventListener('click', () => {
-        banner.remove();
-        document.body.style.marginTop = '0px';
-    });
-}
-
-function triggerFullScreenBlocker(data) {
-    const logoUrl = chrome.runtime.getURL("logo.png");
-
-    const blocker = document.createElement('div');
-    blocker.style.position = 'fixed';
-    blocker.style.top = '0';
-    blocker.style.left = '0';
-    blocker.style.width = '100vw';
-    blocker.style.height = '100vh';
-    blocker.style.backgroundColor = '#7f1d1d';
-    blocker.style.zIndex = '2147483647';
-    blocker.style.display = 'flex';
-    blocker.style.flexDirection = 'column';
-    blocker.style.justifyContent = 'center';
-    blocker.style.alignItems = 'center';
-    blocker.style.fontFamily = 'sans-serif';
-
-    blocker.innerHTML = `
-        <div style="max-width: 600px; text-align: center; background-color: #991b1b; padding: 40px; border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.6); border: 1px solid #f87171; color: white;">
-            <img src="${logoUrl}" style="width: 64px; height: 64px; margin-bottom: 20px; border-radius: 12px; background: white; padding: 4px;" />
-            <h1 style="font-size: 32px; font-weight: 900; margin: 0 0 16px 0;">🚨 Critical Threat Blocked</h1>
-            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 24px; color: #fecaca;">
-                TrustLens AI has intercepted an active <strong>${data.classification}</strong> pathway on this site (Risk Score: ${data.risk_score}/100). Interaction has been suspended.
+            <h1 id="tl-title">Malicious Activity Blocked</h1>
+            <p id="tl-subtitle">
+                TrustLensAI intercepted a runtime behavioral threat on this page.<br>
+                Your credentials and data are protected.
             </p>
-            
-            <div style="background-color: #7f1d1d; padding: 16px; border-radius: 8px; text-align: left; margin-bottom: 32px; border: 1px solid #b91c1c;">
-                <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #f87171; text-transform: uppercase; letter-spacing: 1px;">Threat Parameters:</h3>
-                <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #fca5a5; line-height: 1.5;">
-                    ${data.reasons.map(r => `<li style="margin-bottom: 8px;">${r}</li>`).join('')}
-                </ul>
-            </div>
-            
-            <style>@keyframes pulseAnim { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }</style>
-            <div style="background-color: #000000; padding: 16px; border-radius: 8px; text-align: left; margin-bottom: 32px; border: 1px solid #22c55e; font-family: monospace;">
-                <p style="margin: 0 0 8px 0; font-size: 13px; color: #4ade80;">Web3 Threat Hash: ${generateThreatHash(window.location.href)}</p>
-                <p style="margin: 0; font-size: 13px; color: #22c55e; animation: pulseAnim 1.5s infinite;">⏺ Broadcasting immutable threat signature to Decentralized Oracle Ledger...</p>
-            </div>
-            
-            <div style="display: flex; gap: 16px; justify-content: center;">
-                <button id="tl-back-safety" style="background-color: white; color: #991b1b; border: none; padding: 14px 28px; font-size: 16px; font-weight: 900; border-radius: 8px; cursor: pointer;">Back to Safety</button>
-                <button id="tl-proceed" style="background-color: transparent; color: #fca5a5; border: 1px solid #fca5a5; padding: 14px 28px; font-size: 14px; border-radius: 8px; cursor: pointer;">Ignore & Proceed</button>
-            </div>
-        </div>
-    `;
 
-    document.body.appendChild(blocker);
+            <div id="tl-score-badge">
+                BEHAVIORAL RISK SCORE: ${riskScore} / 100
+            </div>
 
-    document.getElementById('tl-back-safety').addEventListener('click', () => {
-        if (window.history.length > 1) window.history.back();
-        else window.close();
-    });
+            <div id="tl-signals-box">
+                <h4>&#9888; Threat Signals Detected</h4>
+                <ul>${signalListHTML || '<li>Composite heuristic risk threshold crossed.</li>'}</ul>
+            </div>
 
-    document.getElementById('tl-proceed').addEventListener('click', () => blocker.remove());
-}
-// ==========================================
-// BEHAVIORAL DETECTION ENGINE (NEW)
-// ==========================================
-class BehavioralDetector {
-    constructor() {
-        this.score = 0;
-        this.threshold = 90;
-        this.observer = null;
-        this.signals = [];
-        this.isActive = false;
+            <button id="tl-leave-btn" onclick="window.location.href='about:blank'">
+                &#x2192; &nbsp; Leave This Page Safely
+            </button>
+
+            <p id="tl-footer">Secured by TrustLensAI &bull; Behavioral Analytics Pipeline v1.1</p>
+        `;
+
+        // Append as early as possible — if body doesn't exist yet, wait for it
+        if (document.body) {
+            document.body.appendChild(blockScreen);
+        } else {
+            document.addEventListener('DOMContentLoaded', () => {
+                document.body.appendChild(blockScreen);
+            });
+        }
     }
 
-    start() {
-        if (this.isActive) return;
-        this.isActive = true;
+    // ─────────────────────────────────────────────────────────────────────────
+    //  LAYER 1 — Baseline Heuristic Engine
+    //  Runs synchronously at document_start against window.location.
+    //  Signals are intentionally lightweight (10–20 pts each) so URL-only
+    //  evidence does not cross the 50-pt threshold alone — multiple signals
+    //  or a combination with behavioral signals is required.
+    // ─────────────────────────────────────────────────────────────────────────
+    function runBaselineHeuristics() {
+        const href     = (window.location.href     || '').toLowerCase();
+        const hostname = (window.location.hostname || '').toLowerCase();
+        const pathname = (window.location.pathname || '').toLowerCase();
 
-        this.observer = new MutationObserver((mutations) => {
+        // Signal 1 — IP-address URL (e.g. http://192.168.1.1/login)
+        if (/^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(hostname)) {
+            recordSignal('IP-address URL detected (no domain name)', 20);
+        }
+
+        // Signal 2 — Suspicious TLD
+        const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.club', '.work', '.icu', '.buzz', '.cyou'];
+        if (suspiciousTLDs.some(tld => hostname.endsWith(tld))) {
+            recordSignal('Suspicious free/abused TLD detected', 15);
+        }
+
+        // Signal 3 — Excessive subdomain depth (>= 4 dot-separated labels)
+        if (hostname.split('.').length >= 4) {
+            recordSignal('Excessive subdomain depth (≥4 labels)', 15);
+        }
+
+        // Signal 4 — Lookalike brand keyword in a non-brand hostname
+        const brandKeywords = [
+            'paypal', 'amazon', 'apple', 'google', 'microsoft',
+            'bankofamerica', 'netflix', 'facebook', 'instagram',
+            'secure', 'login', 'verify', 'account', 'update', 'confirm'
+        ];
+        const trustedApexes = [
+            'paypal.com', 'amazon.com', 'apple.com', 'google.com',
+            'microsoft.com', 'bankofamerica.com', 'netflix.com',
+            'facebook.com', 'instagram.com'
+        ];
+        const isActualBrand = trustedApexes.some(apex => hostname === apex || hostname.endsWith('.' + apex));
+        if (!isActualBrand && brandKeywords.some(kw => hostname.includes(kw))) {
+            recordSignal('Lookalike brand keyword in hostname', 20);
+        }
+
+        // Signal 5 — @ symbol in URL (classic credential-redirect trick)
+        if (href.includes('@')) {
+            recordSignal('@ symbol in URL (credential-redirect pattern)', 20);
+        }
+
+        // Signal 6 — Abnormally long URL (> 100 characters)
+        if (href.length > 100) {
+            recordSignal('Abnormally long URL (>100 characters)', 10);
+        }
+
+        // Signal 7 — Hyphen-heavy hostname (common in phishing domains)
+        const hyphenCount = (hostname.match(/-/g) || []).length;
+        if (hyphenCount >= 3) {
+            recordSignal('Hyphen-heavy hostname (≥3 hyphens)', 10);
+        }
+
+        // Signal 8 — Suspicious keyword in path
+        const pathKeywords = ['/login', '/signin', '/verify', '/account', '/update', '/confirm', '/secure', '/validate'];
+        if (pathKeywords.some(kw => pathname.includes(kw))) {
+            recordSignal('Suspicious action keyword in URL path', 10);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  LAYER 2 — Tier 2.5 Behavioral Detection Engine
+    //  MutationObserver monitors the live DOM for dynamically-injected threats.
+    //  Signals are weighted heavily (30–55 pts) because behavioral evidence
+    //  is far more reliable than URL heuristics.
+    // ─────────────────────────────────────────────────────────────────────────
+    function initBehavioralEngine() {
+        pageLoadTime = Date.now();
+
+        const observer = new MutationObserver((mutations) => {
+            if (isBlocked) {
+                observer.disconnect();  // No further scanning needed
+                return;
+            }
             mutations.forEach((mutation) => {
-                if (mutation.type === 'childList') {
-                    mutation.addedNodes.forEach((node) => {
-                        this.analyzeNode(node);
-                    });
-                }
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        inspectNode(node);
+                    }
+                });
             });
         });
 
-        this.observer.observe(document.documentElement, {
+        observer.observe(document.documentElement, {
             childList: true,
             subtree: true
         });
     }
 
-    stop() {
-        if (this.observer) {
-            this.observer.disconnect();
-            this.isActive = false;
+    function inspectNode(node) {
+        const elapsed = Date.now() - pageLoadTime;
+
+        // ── B1: Delayed Credential Harvesting ────────────────────────────────
+        // Password inputs injected MORE THAN 2500ms after page load are
+        // almost certainly dynamic phishing overlays — no legitimate auth
+        // flow injects a password field this late without user interaction.
+        if (elapsed > 2500) {
+            const isPasswordInput =
+                node.tagName === 'INPUT' &&
+                (node.getAttribute('type') || '').toLowerCase() === 'password';
+
+            const containsPasswordInput =
+                node.querySelectorAll
+                    ? node.querySelectorAll('input[type="password"]').length > 0
+                    : false;
+
+            if (isPasswordInput || containsPasswordInput) {
+                recordSignal('Delayed credential-harvesting field injected (>2500ms)', 55);
+            }
         }
-    }
 
-    analyzeNode(node) {
-        if (node.nodeType !== Node.ELEMENT_NODE) return;
-
-        // 1. Hidden Iframe Injection (Cross-Origin Exfiltration)
+        // ── B2: Cloaked / Hidden Iframe Injection ─────────────────────────────
         if (node.tagName === 'IFRAME') {
-            const isHidden = node.style.display === 'none' || 
-                             node.style.opacity === '0' || 
-                             node.style.visibility === 'hidden' ||
-                             node.width === '0' || 
-                             node.height === '0' ||
-                             node.width === '1' || 
-                             node.height === '1';
-            
-            if (isHidden) {
-                this.addSignal(95, "Behavioral Alert: Hidden iframe injection detected (Data Exfiltration / Exploit Delivery).");
-            }
-        }
-
-        // 2. Delayed Credential Harvesting (Dynamic Login Forms)
-        if (node.tagName === 'INPUT' && (node.type === 'password' || node.getAttribute('type') === 'password')) {
-            this.addSignal(95, "Behavioral Alert: Delayed password input injection detected (Credential Harvesting).");
+            inspectIframe(node);
         } else if (node.querySelectorAll) {
-            const passwords = node.querySelectorAll('input[type="password"]');
-            if (passwords.length > 0) {
-                this.addSignal(95, "Behavioral Alert: Delayed password form injection detected (Credential Harvesting).");
-            }
+            node.querySelectorAll('iframe').forEach(inspectIframe);
         }
-        
-        // 3. Suspicious Script Injection (Obfuscated/Data URIs)
+
+        // ── B3: Dynamic Script Element Scanning ──────────────────────────────
         if (node.tagName === 'SCRIPT') {
-            if (node.src && node.src.startsWith('data:text/javascript')) {
-                this.addSignal(95, "Behavioral Alert: Suspicious Data-URI Script Injection detected.");
+            inspectScript(node);
+        } else if (node.querySelectorAll) {
+            node.querySelectorAll('script').forEach(inspectScript);
+        }
+    }
+
+    function inspectIframe(iframe) {
+        // Read computed style — accounts for CSS-class-based hiding
+        const style  = window.getComputedStyle ? window.getComputedStyle(iframe) : {};
+        const width  = iframe.offsetWidth  || parseInt(style.width  || '0', 10);
+        const height = iframe.offsetHeight || parseInt(style.height || '0', 10);
+
+        const isHidden =
+            style.display     === 'none'   ||
+            style.visibility  === 'hidden' ||
+            parseFloat(style.opacity || '1') === 0 ||
+            (width <= 1 && height <= 1);
+
+        if (isHidden) {
+            recordSignal('Cloaked/hidden iframe dynamically injected', 55);
+        }
+    }
+
+    function inspectScript(script) {
+        const src     = (script.getAttribute('src') || '').trim();
+        const content = (script.textContent || '').trim();
+
+        // ── B3a: Data-URI Script Execution ───────────────────────────────────
+        // Legitimate sites never load scripts via data: URIs.
+        if (src.toLowerCase().startsWith('data:text/javascript') ||
+            src.toLowerCase().startsWith('data:application/javascript')) {
+            recordSignal('Data-URI script execution payload detected', 55);
+            return;
+        }
+
+        // ── B3b: Base64 Decode-and-Run Chain ─────────────────────────────────
+        // Pattern: eval(atob(...)) or new Function(atob(...))
+        if (/eval\s*\(\s*atob\s*\(/i.test(content) ||
+            /Function\s*\(\s*atob\s*\(/i.test(content)) {
+            recordSignal('Base64 decode-and-run chain (eval/Function + atob)', 55);
+            return;
+        }
+
+        // ── B3c: Obfuscated Execution Signatures ─────────────────────────────
+        // Each match adds 30 pts — one obfuscation pattern alone is
+        // suspicious but may appear in legitimate minified code.
+        // Two or more patterns crossing the 50-pt threshold is very reliable.
+        const obfuscationPatterns = [
+            { re: /eval\s*\(/i,                                           label: 'eval() call'                          },
+            { re: /new\s+Function\s*\(/i,                                 label: 'new Function() dynamic compilation'   },
+            { re: /document\.write\s*\(\s*unescape\s*\(/i,               label: 'document.write(unescape()) encoding'  },
+            { re: /String\.fromCharCode\s*\(\s*\d+\s*,\s*\d+/i,          label: 'String.fromCharCode multi-arg chain'  },
+            { re: /\\x[0-9a-f]{2}(\\x[0-9a-f]{2}){4,}/i,                label: 'Hex-escape obfuscation string'        },
+            { re: /\\u[0-9a-f]{4}(\\u[0-9a-f]{4}){3,}/i,                label: 'Unicode-escape obfuscation string'    },
+        ];
+
+        obfuscationPatterns.forEach(({ re, label }) => {
+            if (re.test(content)) {
+                recordSignal(`Obfuscated JS signature: ${label}`, 30);
             }
-        }
+        });
     }
 
-    addSignal(weight, reason) {
-        this.score += weight;
-        this.signals.push(reason);
-        console.warn(`[TrustLensAI] Behavioral Signal Detected: ${reason} (Weight: ${weight})`);
+    // ── Public init ──────────────────────────────────────────────────────────
+    return { runBaselineHeuristics, initBehavioralEngine };
+})();
 
-        if (this.score >= this.threshold) {
-            this.triggerBlock();
-        }
-    }
+// ─────────────────────────────────────────────────────────────────────────────
+//  BOOTSTRAP
+//  Layer 1 fires immediately (document_start — no DOM needed).
+//  Layer 2 fires as soon as the DOM root exists to attach the observer.
+// ─────────────────────────────────────────────────────────────────────────────
 
-    triggerBlock() {
-        this.stop();
-        const threatData = {
-            classification: "Scam",
-            risk_score: Math.min(this.score, 100),
-            reasons: this.signals
-        };
-        triggerFullScreenBlocker(threatData);
-    }
-}
+// Layer 1 — synchronous, no DOM dependency
+TrustLens.runBaselineHeuristics();
 
-const behavioralEngine = new BehavioralDetector();
-
-// ==========================================
-// 5. MASTER CONTROLLER & BCACHE FIX
-// ==========================================
-function initScanner() {
-    // Ensure we don't crash if the DOM isn't fully ready
-    if (!document.body) {
-        window.requestAnimationFrame(initScanner);
-        return;
-    }
-    
-    if (window.location.hostname.includes("google.com")) {
-        setTimeout(injectTrustLensShields, 1500);
-    } else {
-        activePageScanner();
-        behavioralEngine.start();
-    }
-}
-
-// 1. Fire instantly on initial page load (Zero Latency)
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initScanner);
+// Layer 2 — attach MutationObserver when document element is available
+if (document.documentElement) {
+    TrustLens.initBehavioralEngine();
 } else {
-    initScanner();
+    // Fallback: rare case where document_start fires before <html> tag
+    document.addEventListener('DOMContentLoaded', () => {
+        TrustLens.initBehavioralEngine();
+    });
 }
-
-// 2. Fire on Back/Forward navigation (Defeats bfcache bypass)
-window.addEventListener("pageshow", (event) => {
-    if (event.persisted) {
-        initScanner();
-    }
-});

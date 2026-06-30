@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html><head><title>B-12 Login Form with Dynamic Header</title></head><body>
+<h1 id="greeting">Loading…</h1>
+<form>
+    <input type="text" name="email" placeholder="Email">
+    <input type="password" name="password" placeholder="Password">
+    <button type="submit">Sign In</button>
+</form>
+<script>
+setTimeout(() => {
+    document.getElementById('greeting').textContent = 'Welcome back!';
+}, 500);
+</script>
+</body></html>

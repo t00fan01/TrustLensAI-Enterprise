@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html><head><title>B-09 News Feed Dynamic List</title></head><body>
+<h1>Today's Headlines</h1>
+<ul id="feed"></ul>
+<script>
+setTimeout(() => {
+    const feed = document.getElementById('feed');
+    ['Story A', 'Story B', 'Story C'].forEach(text => {
+        const li = document.createElement('li');
+        li.textContent = text;
+        feed.appendChild(li);
+    });
+}, 1500);
+</script>
+</body></html>
