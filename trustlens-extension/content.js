@@ -313,6 +313,104 @@ function triggerFullScreenBlocker(data) {
     document.getElementById('tl-proceed').addEventListener('click', () => blocker.remove());
 }
 // ==========================================
+// BEHAVIORAL DETECTION ENGINE (NEW)
+// ==========================================
+class BehavioralDetector {
+    constructor() {
+        this.score = 0;
+        this.threshold = 90;
+        this.observer = null;
+        this.signals = [];
+        this.isActive = false;
+    }
+
+    start() {
+        if (this.isActive) return;
+        this.isActive = true;
+
+        this.observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach((node) => {
+                        this.analyzeNode(node);
+                    });
+                }
+            });
+        });
+
+        this.observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    stop() {
+        if (this.observer) {
+            this.observer.disconnect();
+            this.isActive = false;
+        }
+    }
+
+    analyzeNode(node) {
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+        // 1. Hidden Iframe Injection (Cross-Origin Exfiltration)
+        if (node.tagName === 'IFRAME') {
+            const isHidden = node.style.display === 'none' || 
+                             node.style.opacity === '0' || 
+                             node.style.visibility === 'hidden' ||
+                             node.width === '0' || 
+                             node.height === '0' ||
+                             node.width === '1' || 
+                             node.height === '1';
+            
+            if (isHidden) {
+                this.addSignal(95, "Behavioral Alert: Hidden iframe injection detected (Data Exfiltration / Exploit Delivery).");
+            }
+        }
+
+        // 2. Delayed Credential Harvesting (Dynamic Login Forms)
+        if (node.tagName === 'INPUT' && (node.type === 'password' || node.getAttribute('type') === 'password')) {
+            this.addSignal(95, "Behavioral Alert: Delayed password input injection detected (Credential Harvesting).");
+        } else if (node.querySelectorAll) {
+            const passwords = node.querySelectorAll('input[type="password"]');
+            if (passwords.length > 0) {
+                this.addSignal(95, "Behavioral Alert: Delayed password form injection detected (Credential Harvesting).");
+            }
+        }
+        
+        // 3. Suspicious Script Injection (Obfuscated/Data URIs)
+        if (node.tagName === 'SCRIPT') {
+            if (node.src && node.src.startsWith('data:text/javascript')) {
+                this.addSignal(95, "Behavioral Alert: Suspicious Data-URI Script Injection detected.");
+            }
+        }
+    }
+
+    addSignal(weight, reason) {
+        this.score += weight;
+        this.signals.push(reason);
+        console.warn(`[TrustLensAI] Behavioral Signal Detected: ${reason} (Weight: ${weight})`);
+
+        if (this.score >= this.threshold) {
+            this.triggerBlock();
+        }
+    }
+
+    triggerBlock() {
+        this.stop();
+        const threatData = {
+            classification: "Scam",
+            risk_score: Math.min(this.score, 100),
+            reasons: this.signals
+        };
+        triggerFullScreenBlocker(threatData);
+    }
+}
+
+const behavioralEngine = new BehavioralDetector();
+
+// ==========================================
 // 5. MASTER CONTROLLER & BCACHE FIX
 // ==========================================
 function initScanner() {
@@ -326,6 +424,7 @@ function initScanner() {
         setTimeout(injectTrustLensShields, 1500);
     } else {
         activePageScanner();
+        behavioralEngine.start();
     }
 }
 

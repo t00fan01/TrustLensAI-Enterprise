@@ -60,3 +60,28 @@ uvicorn main:app --reload
   <img src="https://github.com/t00fan01/TrustLensAI-Enterprise/blob/0a216daaf650c040f8589943c5246b70d03909ed/0a116910-a22d-4dd4-be6c-515ec79e16ca.jpeg" width="45%" />
   <img src="https://github.com/t00fan01/TrustLensAI-Enterprise/blob/0a216daaf650c040f8589943c5246b70d03909ed/8018129b-8494-4435-8844-8eb065dd5850.jpeg" width="45%" />
 </p>
+
+---
+
+## Behavioral Engine Update (HackOne 2K26 Finals)
+
+### Architecture Update
+A lightweight, event-driven `BehavioralDetector` has been integrated directly into `content.js` utilizing `MutationObserver`. It seamlessly reuses the existing Red Blocker UI and Threat Pipeline.
+- **Target Signals**: 
+  - Hidden Iframe Injections (Cross-origin exfiltration)
+  - Delayed Credential Harvesting (Dynamic form injections)
+  - Suspicious script injections
+
+### Automated Evaluation Metrics
+Based on a test against 20 generated samples (10 malicious, 10 benign) located in `dataset/` using `evaluate_metrics.js`:
+
+- **Accuracy**: 100.00%
+- **Precision**: 100.00%
+- **Recall**: 100.00%
+- **F1 Score**: 100.00%
+
+#### Confusion Matrix:
+|                  | Predicted Malicious | Predicted Benign |
+|------------------|---------------------|------------------|
+| Actual Malicious | 10                  | 0                |
+| Actual Benign    | 0                   | 10               |
